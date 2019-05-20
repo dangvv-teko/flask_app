@@ -1,5 +1,5 @@
 # add service account kubeconfig
-## b1: cài đặt jq
+## b1: install jq
 - Đứng ở master hoặc kubectl client (đã config để connect tới K8s cluster) cài đặt:
   - `sudo apt-get install jq`
 ## b2: create namespace
