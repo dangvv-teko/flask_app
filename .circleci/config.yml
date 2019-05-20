@@ -7,14 +7,12 @@ jobs:
     steps:
     - checkout
     - restore_cache:
-        key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-    - run:
-        command: |
-          pip --cache-dir=.pip-flask_app install -r requirements.txt
+        key: pip-{{checksum "requirements.txt"}}
+    - run: pip install -r requirements.txt
     - save_cache:
-        key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+        key: pip-{{checksum "requirements.txt"}}
         paths:
-        - .pip-flask_app
+        - ~/.cache/pip
     - run:
         command: |
           python test/hello_test.py
