@@ -1,0 +1,57 @@
+version: 2
+jobs:
+  test:
+    working_directory: ~/flask_app
+    docker:
+    - image: python:3.5.2
+    steps:
+    - checkout
+    - restore_cache:
+        key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+    - run:
+        command: |
+          pip --cache-dir=.pip-flask_app install -r requirements.txt
+    - save_cache:
+        key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+        paths:
+        - .pip-flask_app
+    - run:
+        command: |
+          python test/hello_test.py
+    
+  build:
+    working_directory: ~/flask_app
+    docker:
+    - image: docker:stable
+    steps:
+    - checkout
+    - setup_remote_docker
+    - run: |
+        docker login -u dangvv1995 -p $DOCKERHUB_PASSS
+        docker build -t flask_app .
+        docker tag flask_app $GUNICORN_FLASK_IMAGE:${CIRCLE_BRANCH}_$CIRCLE_SHA1
+        docker push $GUNICORN_FLASK_IMAGE:${CIRCLE_BRANCH}_$CIRCLE_SHA1
+        
+  deploy:
+    working_directory: ~/flask_app
+    docker:
+    - image: dangvv1995/kubectl:1.14.1
+    steps:
+    - checkout
+    - run: |
+        echo "${KUBE_CONFIG}" | base64 -di > k8s-teko-flask-teko-flask-conf
+        export KUBECONFIG_SAVED=$KUBECONFIG
+        export KUBECONFIG=$KUBECONFIG:k8s-teko-flask-teko-flask-conf
+        sed -i "s/<VERSION>/${CIRCLE_BRANCH}_$CIRCLE_SHA1/g" deploy/hello_flask.yaml
+        kubectl apply -f deploy/hello_flask.yaml -n teko-flask
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - test
+    - build:
+        requires:
+        - test
+    - deploy:
+        requires:
+        - build
