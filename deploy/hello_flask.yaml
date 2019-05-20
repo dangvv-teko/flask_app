@@ -1,0 +1,37 @@
+### Create Deployment hello_flask
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hello
+  labels:
+    name: hello
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: gunicorn
+        image: dangvv1995/flask_app:<VERSION>
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+
+### Create service openidsv
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: hellosv
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+  selector:
+    app: hello
+#   type: NodePort
+  type: LoadBalancer
